@@ -398,22 +398,30 @@ namespace netDxf.Blocks
             if (doc == null)
                 throw new ArgumentNullException(nameof(doc));
 
-            Block block = new Block(name) {Origin = doc.DrawingVariables.InsBase};
-            block.Record.Units = doc.DrawingVariables.InsUnits;
-            IReadOnlyList<DxfObject> entities = doc.Layouts.GetReferences(Layout.ModelSpaceName);
+            var blocks = doc.Blocks;
+            Block _block = new Block(name) { Origin = doc.DrawingVariables.InsBase}; 
+            foreach (var item in blocks)
+            {
+                if (item.Name == name)
+                {
+                    _block = (Block)item;
+                }                
+            }            
+            List<DxfObject> entities = doc.Layouts.GetReferences(Layout.ModelSpaceName);
             foreach (DxfObject dxfObject in entities)
             {
+                if (dxfObject.Owner.Handle != _block.Handle) continue;
                 EntityObject entity = dxfObject as EntityObject;
                 if (entity == null)
                     continue;
-                EntityObject clone = (EntityObject) entity.Clone();
+                EntityObject clone = (EntityObject)entity.Clone();
                 AttributeDefinition attdef = clone as AttributeDefinition;
                 if (attdef != null)
                 {
-                    block.AttributeDefinitions.Add(attdef);
+                    _block.AttributeDefinitions.Add(attdef);
                     continue;
                 }
-                block.Entities.Add(clone);
+                _block.Entities.Add(clone);
             }
             return block;
         }
